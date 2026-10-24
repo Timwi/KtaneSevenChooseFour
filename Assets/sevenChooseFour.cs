@@ -1,24 +1,25 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Linq;
-using UnityEngine;
+using System.Text.RegularExpressions;
 using KModkit;
+using UnityEngine;
 
 public class sevenChooseFour : MonoBehaviour
 {
-    public KMAudio audio;
-    public KMBombInfo bomb;
-    public KMBombModule module;
-    public KMSelectable[] buttons;
+    public KMAudio Audio;
+    public KMBombInfo Bomb;
+    public KMBombModule Module;
+    public KMSelectable[] Buttons;
 
-    public Material[] ledColors; //B C G M R W Y
-    private string[] ledColorNames = { "B", "C", "G", "M", "R", "Y", "W" };
-    private string[] manColorNames = { "R", "G", "B", "M", "C", "Y", "W" };
-    public Material blackled;
-    public Renderer[] leds;
-    private List<int> ledindex = new List<int>();
+    public Material[] LedColors; //B C G M R Y W
+    public Material BlackLed;
+    public Renderer[] Leds;
+
+    private readonly string[] ledColorNames = { "B", "C", "G", "M", "R", "Y", "W" };
+    private readonly string[] manColorNames = { "R", "G", "B", "M", "C", "Y", "W" };
+    private readonly List<int> ledindex = new List<int>();
 
     private int morsekeyindex;
     private char morsekeyletter;
@@ -31,33 +32,31 @@ public class sevenChooseFour : MonoBehaviour
     private int numkey;
     private bool[] flashcode;
 
-    private List<int> ledfunction = new List<int>() { 0, 1, 2, 3 }; //0: morse 1: tap 2: colors 3: number
+    private static readonly List<int> ledfunction = new List<int>() { 0, 1, 2, 3 }; //0: morse 1: tap 2: colors 3: number
     private List<int> ledfunctionshuffled = new List<int>();
 
     private bool lightsready = false;
 
-    //private List<string> keySequences = new List<string>() { "1234", "1122", "1314", "3344" };
-
-    private readonly string[] MORSE_SYMBOLS = {
+    private readonly string[] _morseSymbols = {
         ".-", "-...", "-.-.", "-..",  ".",   "..-.", "--.", "....", "..",   ".---", "-.-",  ".-..", "--",
         "-.", "---",  ".--.", "--.-", ".-.", "...",  "-",   "..-",  "...-", ".--",  "-..-", "-.--", "--.."
     };
 
-    private const string SYMBOLS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private const string _alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-    private string[] gates = { "NOR", "XOR", "OR", "AND" };
+    private readonly string[] gates = { "NOR", "XOR", "OR", "AND" };
 
-    static int moduleIdCounter = 1;
-    int moduleId;
+    private static int moduleIdCounter = 1;
+    private int moduleId;
     private bool moduleSolved;
     private bool moduleReady = false;
 
     private void Awake()
     {
         moduleId = moduleIdCounter++;
-        foreach (KMSelectable button in buttons)
+        foreach (var button in Buttons)
         {
-            KMSelectable pressedButton = button;
+            var pressedButton = button;
             button.OnInteract += delegate () { ButtonPress(pressedButton); return false; };
         }
     }
@@ -65,18 +64,18 @@ public class sevenChooseFour : MonoBehaviour
     private List<string> solution;
 
     // Use this for initialization
-    void Start()
+    private void Start()
     {
         solution = new List<string>();
         PickLedColor();
         GenerateKeys();
         solution = FillSolution();
         moduleReady = true;
-        string cursol = solution[0];
+        var cursol = solution[0];
         if (solution[0] == "W")
         {
             cursol = "";
-            foreach (string s in whitesolution)
+            foreach (var s in whitesolution)
             {
                 cursol += s;
                 cursol += " ";
@@ -85,31 +84,31 @@ public class sevenChooseFour : MonoBehaviour
         Debug.LogFormat("[Seven Choose Four #{0}] Stage {1} solution is {2}", moduleId, stage + 1, cursol);
     }
 
-    void PickLedColor()
+    private void PickLedColor()
     {
         while (ledindex.Count < 4)
         {
-            int ran = UnityEngine.Random.Range(0, 7);
+            var ran = UnityEngine.Random.Range(0, 7);
             if (!ledindex.Contains(ran)) ledindex.Add(ran);
         }
         ledindex.Add(UnityEngine.Random.Range(0, 7));
-        for (int i = 0; i < 4; i++)
+        for (var i = 0; i < 4; i++)
         {
-            leds[i].material = ledColors[ledindex[i]];
+            Leds[i].material = LedColors[ledindex[i]];
         }
     }
 
-    private string[] keys = new string[4];
+    private readonly string[] keys = new string[4];
 
-    void GenerateKeys()
+    private void GenerateKeys()
     {
         morsekeyindex = UnityEngine.Random.Range(0, 26);
-        morsekeyletter = SYMBOLS[morsekeyindex];
-        morse = MorseToBoolArray(MORSE_SYMBOLS[morsekeyindex]);
+        morsekeyletter = _alphabet[morsekeyindex];
+        morse = MorseToBoolArray(_morseSymbols[morsekeyindex]);
 
         tapkeyindex = UnityEngine.Random.Range(0, 26);
         if (tapkeyindex == 10) tapkeyindex = 2;
-        tapkey = SYMBOLS[tapkeyindex];
+        tapkey = _alphabet[tapkeyindex];
         tapcode = TapToBoolArray(tapkeyindex >= 11 ? tapkeyindex - 1 : tapkeyindex);
 
         numkey = UnityEngine.Random.Range(1, 8);
@@ -118,21 +117,21 @@ public class sevenChooseFour : MonoBehaviour
         ledfunctionshuffled = ledfunction.OrderBy(x => UnityEngine.Random.value).ToList();
         lightsready = true;
 
-        Debug.LogFormat("[Seven Choose Four #{0}] Morse key is {1} {2}", moduleId, morsekeyletter, MORSE_SYMBOLS[morsekeyindex]);
+        Debug.LogFormat("[Seven Choose Four #{0}] Morse key is {1} {2}", moduleId, morsekeyletter, _morseSymbols[morsekeyindex]);
         Debug.LogFormat("[Seven Choose Four #{0}] Tap code key is {1}", moduleId, tapkey);
-        string ledcolorstring = "";
-        for (int i = 0; i < ledindex.Count; i++)
+        var ledcolorstring = "";
+        for (var i = 0; i < ledindex.Count; i++)
         {
             ledcolorstring += ledColorNames[ledindex.ToArray()[i]];
         }
         Debug.LogFormat("[Seven Choose Four #{0}] Color seq is {1}", moduleId, ledcolorstring);
         Debug.LogFormat("[Seven Choose Four #{0}] Number key is {1}={2}", moduleId, numkey, manColorNames[numkey - 1]);
-        List<Buttoninfo> buttoninfolist = DefineButtons();
+        var buttoninfolist = DefineButtons();
         //int keysoffset = ledfunctionshuffled[2];
-        int keysoffset = ledfunctionshuffled.IndexOf(2);
+        var keysoffset = ledfunctionshuffled.IndexOf(2);
         //Debug.Log("keyoffset " + keysoffset);
-        string keyorder = "";
-        for (int i = 0; i < 4; i++)
+        var keyorder = "";
+        for (var i = 0; i < 4; i++)
         {
             keys[i] = buttoninfolist[(i + keysoffset) % 4].buttonoutputkey;
             // Debug.Log("keys " + keys[i] + " from location " + (i + keysoffset) % 4);
@@ -148,10 +147,10 @@ public class sevenChooseFour : MonoBehaviour
         public string buttonoutputkey { get; set; }
     }
 
-    List<Buttoninfo> DefineButtons()
+    private List<Buttoninfo> DefineButtons()
     {
-        List<Buttoninfo> l = new List<Buttoninfo>();
-        for (int i = 0; i < 4; i++)
+        var l = new List<Buttoninfo>();
+        for (var i = 0; i < 4; i++)
         {
             l.Add(new Buttoninfo
             {
@@ -162,7 +161,7 @@ public class sevenChooseFour : MonoBehaviour
         return l;
     }
 
-    string GetOutputKey(int oper)
+    private string GetOutputKey(int oper)
     {
         switch (oper)
         {
@@ -181,43 +180,36 @@ public class sevenChooseFour : MonoBehaviour
 
     private List<string> whitesolution;
 
-    List<string> FillSolution()
+    private List<string> FillSolution()
     {
-        List<string> solution = new List<string>();
-        string sol = "";
-        for (int i = 0; i < 4; i++)
+        var solution = new List<string>();
+        for (var i = 0; i < 4; i++)
         {
             switch (ledColorNames[ledindex.ToArray()[i]])
             {
                 case "R":
-                    sol = SolveRed(keys[i], i);
-                    solution.Add(sol);
+                    solution.Add(SolveRed(keys[i], i));
                     break;
                 case "G":
-                    sol = SolveGreen(keys[i], i);
-                    solution.Add(sol);
+                    solution.Add(SolveGreen(keys[i], i));
                     break;
                 case "B":
-                    sol = SolveBlue(keys[i], i);
-                    solution.Add(sol);
+                    solution.Add(SolveBlue(keys[i]));
                     break;
                 case "M":
-                    sol = SolveMagenta(keys[i], i);
-                    solution.Add(sol);
+                    solution.Add(SolveMagenta(keys[i]));
                     break;
                 case "C":
-                    sol = SolveCyan(keys[i], i);
-                    solution.Add(sol);
+                    solution.Add(SolveCyan(keys[i], i));
                     break;
                 case "Y":
-                    sol = SolveYellow(keys[i], i);
-                    solution.Add(sol);
+                    solution.Add(SolveYellow(keys[i], i));
                     break;
                 case "W":
                     whitesolution = FillWhiteSolution(keys[i], i);
-                    string whitesols = "";
-                    int colname = 0;
-                    foreach (string s in whitesolution)
+                    var whitesols = "";
+                    var colname = 0;
+                    foreach (var s in whitesolution)
                     {
                         whitesols += manColorNames[colname];
                         whitesols += ": ";
@@ -236,11 +228,11 @@ public class sevenChooseFour : MonoBehaviour
     private List<string> FillWhiteSolution(string key, int seqnum)
     {
         Debug.LogFormat("[Seven Choose Four #{0}] White Puzzle: Key is {1}", moduleId, key);
-        List<string> whitesols = new List<string>();
+        var whitesols = new List<string>();
         whitesols.Add(SolveRed(key, seqnum));
         whitesols.Add(SolveGreen(key, seqnum));
-        whitesols.Add(SolveBlue(key, seqnum));
-        whitesols.Add(SolveMagenta(key, seqnum));
+        whitesols.Add(SolveBlue(key));
+        whitesols.Add(SolveMagenta(key));
         whitesols.Add(SolveCyan(key, seqnum));
         whitesols.Add(SolveYellow(key, seqnum));
 
@@ -249,12 +241,12 @@ public class sevenChooseFour : MonoBehaviour
 
     private int stage = 0;
     private int numpresses = 0;
-    private List<char> buttonspressed = new List<char>();
+    private readonly List<char> buttonspressed = new List<char>();
 
-    void ButtonPress(KMSelectable button)
+    private void ButtonPress(KMSelectable button)
     {
-        audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, this.transform);
-        string buttonname = button.name;
+        Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, this.transform);
+        var buttonname = button.name;
         button.AddInteractionPunch();
         Debug.LogFormat("[Seven Choose Four #{0}] Button pressed is {1}", moduleId, getButtonValue(buttonname));
 
@@ -263,7 +255,7 @@ public class sevenChooseFour : MonoBehaviour
             buttonspressed.Add(getButtonValue(buttonname));
             if (numpresses == 3)
             {
-                string currentsolution = solution[stage];
+                var currentsolution = solution[stage];
                 if (currentsolution == "W")
                 {
                     if (whitesolution.Contains(buttonspressed.Join("")))
@@ -272,8 +264,8 @@ public class sevenChooseFour : MonoBehaviour
                     }
                     else
                     {
-                        module.HandleStrike();
-                        buttons[stage].GetComponent<MeshRenderer>().material = ledColors[4];
+                        Module.HandleStrike();
+                        Buttons[stage].GetComponent<MeshRenderer>().material = LedColors[4];
                         numpresses = -1;
                         Debug.LogFormat("[Seven Choose Four #{0}] Incorrect, you entered {1}, stage reset.", moduleId, buttonspressed.Join(""));
                     }
@@ -286,8 +278,8 @@ public class sevenChooseFour : MonoBehaviour
                     }
                     else
                     {
-                        module.HandleStrike();
-                        buttons[stage].GetComponent<MeshRenderer>().material = ledColors[4];
+                        Module.HandleStrike();
+                        Buttons[stage].GetComponent<MeshRenderer>().material = LedColors[4];
                         numpresses = -1;
                         Debug.LogFormat("[Seven Choose Four #{0}] Incorrect, you entered {1}, stage reset.", moduleId, buttonspressed.Join(""));
                     }
@@ -298,29 +290,29 @@ public class sevenChooseFour : MonoBehaviour
         }
     }
 
-    void UpdateStage()
+    private void UpdateStage()
     {
-        buttons[stage].GetComponent<MeshRenderer>().material = ledColors[2];
+        Buttons[stage].GetComponent<MeshRenderer>().material = LedColors[2];
         stage++;
         numpresses = -1;
         if (stage == 4)
         {
             lightsready = false;
             moduleReady = false;
-            foreach (Renderer led in leds)
+            foreach (var led in Leds)
             {
-                led.material = ledColors[2];
+                led.material = LedColors[2];
             }
-            module.HandlePass();
+            Module.HandlePass();
             moduleSolved = true;
         }
         else
         {
-            string stagesol = "";
+            var stagesol = "";
             Debug.LogFormat("[Seven Choose Four #{0}] Stage Passed", moduleId);
             if (solution[stage] == "W")
             {
-                foreach (string s in whitesolution)
+                foreach (var s in whitesolution)
                 {
                     stagesol += s;
                     stagesol += " ";
@@ -330,11 +322,11 @@ public class sevenChooseFour : MonoBehaviour
             {
                 stagesol = solution[stage];
             }
-            Debug.LogFormat("[Seven Choose Four #{0}] Next stage solution is " + stagesol, moduleId);
+            Debug.LogFormat("[Seven Choose Four #{0}] Next stage solution is {1}", moduleId, stagesol);
         }
     }
 
-    char getButtonValue(string name)
+    private char getButtonValue(string name)
     {
         switch (name)
         {
@@ -365,15 +357,15 @@ public class sevenChooseFour : MonoBehaviour
     private int numtimer = 0;
 
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
         if (lightsready)
         {
             timer_morse -= Time.deltaTime;
             if (timer_morse < 0)
             {
-                int morseled = ledfunctionshuffled.IndexOf(0);
-                leds[morseled].material = morse[morsetimer] ? ledColors[ledindex[morseled]] : blackled;
+                var morseled = ledfunctionshuffled.IndexOf(0);
+                Leds[morseled].material = morse[morsetimer] ? LedColors[ledindex[morseled]] : BlackLed;
                 morsetimer = (morsetimer + 1) % morse.Length;
                 timer_morse = DOT_LENGTH;
             }
@@ -381,8 +373,8 @@ public class sevenChooseFour : MonoBehaviour
             timer_tap -= Time.deltaTime;
             if (timer_tap < 0)
             {
-                int tapled = ledfunctionshuffled.IndexOf(1);
-                leds[tapled].material = tapcode[taptimer] ? ledColors[ledindex[tapled]] : blackled;
+                var tapled = ledfunctionshuffled.IndexOf(1);
+                Leds[tapled].material = tapcode[taptimer] ? LedColors[ledindex[tapled]] : BlackLed;
                 taptimer = (taptimer + 1) % tapcode.Length;
                 timer_tap = DOT_LENGTH;
             }
@@ -390,9 +382,9 @@ public class sevenChooseFour : MonoBehaviour
             timer_color -= Time.deltaTime;
             if (timer_color < 0)
             {
-                int colorled = ledfunctionshuffled.IndexOf(2);
+                var colorled = ledfunctionshuffled.IndexOf(2);
 
-                leds[colorled].material = colortimer < ledindex.Count ? ledColors[ledindex[colortimer]] : blackled;
+                Leds[colorled].material = colortimer < ledindex.Count ? LedColors[ledindex[colortimer]] : BlackLed;
                 colortimer = (colortimer + 1) % (ledindex.Count + 1);
 
                 timer_color = DOT_LENGTH * 3;
@@ -401,18 +393,18 @@ public class sevenChooseFour : MonoBehaviour
             timer_num -= Time.deltaTime;
             if (timer_num < 0)
             {
-                int numled = ledfunctionshuffled.IndexOf(3);
-                leds[numled].material = flashcode[numtimer] ? ledColors[ledindex[numled]] : blackled;
+                var numled = ledfunctionshuffled.IndexOf(3);
+                Leds[numled].material = flashcode[numtimer] ? LedColors[ledindex[numled]] : BlackLed;
                 numtimer = (numtimer + 1) % flashcode.Length;
                 timer_num = DOT_LENGTH;
             }
         }
     }
 
-    bool[] MorseToBoolArray(string morse)
+    private bool[] MorseToBoolArray(string morse)
     {
-        int length = 0;
-        foreach (char c in morse)
+        var length = 0;
+        foreach (var c in morse)
         {
             if (c == '.')
             {
@@ -423,9 +415,9 @@ public class sevenChooseFour : MonoBehaviour
                 length += 4;
             }
         }
-        bool[] result = new bool[length + 4];
-        int pointer = 0;
-        foreach (char c in morse)
+        var result = new bool[length + 4];
+        var pointer = 0;
+        foreach (var c in morse)
         {
             if (c == '.')
             {
@@ -443,19 +435,19 @@ public class sevenChooseFour : MonoBehaviour
         return result;
     }
 
-    private int tapsmallgap = 3;
-    private int taplargegap = 10;
+    private readonly int tapsmallgap = 3;
+    private readonly int taplargegap = 10;
 
-    bool[] TapToBoolArray(int index)
+    private bool[] TapToBoolArray(int index)
     {
-        int row = index / 5 + 1;
-        int col = index % 5 + 1;
+        var row = index / 5 + 1;
+        var col = index % 5 + 1;
 
-        int length = row * 2 + col * 2 + tapsmallgap + taplargegap;
-        int rowmax = row * 2;
-        int colmax = rowmax + col * 2 + tapsmallgap;
-        bool[] tapcodeflashes = new bool[length];
-        for (int i = 0; i < length; i++)
+        var length = row * 2 + col * 2 + tapsmallgap + taplargegap;
+        var rowmax = row * 2;
+        var colmax = rowmax + col * 2 + tapsmallgap;
+        var tapcodeflashes = new bool[length];
+        for (var i = 0; i < length; i++)
         {
             if (i < rowmax || (i >= rowmax + tapsmallgap && i < colmax)) tapcodeflashes[i] = i % 2 == 0;
             else if (i >= rowmax && i < rowmax + tapsmallgap) tapcodeflashes[i] = false;
@@ -464,47 +456,43 @@ public class sevenChooseFour : MonoBehaviour
         return tapcodeflashes;
     }
 
-    bool[] NumToFlashArray(int index)
+    private bool[] NumToFlashArray(int index)
     {
-        int onframes = 7;
-        int offframes = 10;
-        int length = index * onframes + index + offframes;
-        bool[] numflashes = new bool[length];
-        for (int i = 0; i < length; i++)
-        {
-            if (i <= length - offframes) numflashes[i] = i % (onframes + 1) == 0 ? false : true;
-            else numflashes[i] = false;
-        }
-
+        var onframes = 7;
+        var offframes = 10;
+        var length = index * onframes + index + offframes;
+        var numflashes = new bool[length];
+        for (var i = 0; i < length; i++)
+            numflashes[i] = i <= length - offframes && (i % (onframes + 1) != 0);
         return numflashes;
     }
 
-    string Reverse(string s)
+    private string Reverse(string s)
     {
-        string sr = "";
-        for (int i = s.Length - 1; i >= 0; i--)
+        var sr = "";
+        for (var i = s.Length - 1; i >= 0; i--)
         {
             sr += s.ToCharArray()[i];
         }
         return sr;
     }
 
-    private List<string> redtrue = new List<string>() { "1423", "2314", "4123", "2341" };
-    private List<string> redfalse = new List<string>() { "2313", "4231", "2233", "1231" };
+    private readonly List<string> redtrue = new List<string>() { "1423", "2314", "4123", "2341" };
+    private readonly List<string> redfalse = new List<string>() { "2313", "4231", "2233", "1231" };
 
-    string SolveRed(string keyletter, int seqnum)
+    private string SolveRed(string keyletter, int seqnum)
     {
-        int key = SYMBOLS.IndexOf(keyletter) + 1;
-        int num_rports = bomb.GetPortCount("StereoRCA") + bomb.GetPortCount("RJ45") + bomb.GetPortCount("Parallel") + bomb.GetPortCount("Serial");
-        Debug.LogFormat("[Seven Choose Four #{0}] Red Puzzle: Key is " + keyletter, moduleId);
-        key = key + num_rports;
-        key = key % 100;
-        int tensdigit = key / 10;
-        int onesdigit = key % 10;
-        bool tensdigitbool = tensdigit % 2 != 0;
-        bool onesdigitbool = onesdigit % 2 != 0;
-        bool solution = false;
-        Debug.LogFormat("[Seven Choose Four #{0}] Red Puzzle: Gate used is " + gates[seqnum], moduleId);
+        var key = _alphabet.IndexOf(keyletter) + 1;
+        var num_rports = Bomb.GetPortCount("StereoRCA") + Bomb.GetPortCount("RJ45") + Bomb.GetPortCount("Parallel") + Bomb.GetPortCount("Serial");
+        Debug.LogFormat("[Seven Choose Four #{0}] Red Puzzle: Key is {1}", moduleId, keyletter);
+        key += num_rports;
+        key %= 100;
+        var tensdigit = key / 10;
+        var onesdigit = key % 10;
+        var tensdigitbool = tensdigit % 2 != 0;
+        var onesdigitbool = onesdigit % 2 != 0;
+        var solution = false;
+        Debug.LogFormat("[Seven Choose Four #{0}] Red Puzzle: Gate used is {1}", moduleId, gates[seqnum]);
         switch (seqnum)
         {
             case 0: //NOR
@@ -523,7 +511,7 @@ public class sevenChooseFour : MonoBehaviour
         return logSolution("Red", solution ? redtrue[seqnum] : redfalse[seqnum]);
     }
 
-    private int[,] linesgrid =
+    private readonly int[,] linesgrid =
     {
         {5, 6, 3, 5 },
         {7, 6, 6, 6 },
@@ -531,44 +519,42 @@ public class sevenChooseFour : MonoBehaviour
         {4, 7, 5, 7 }
     };
 
-    private List<string> greenodd = new List<string>() { "3241", "1122", "4332", "1231" };
+    private readonly List<string> greenodd = new List<string>() { "3241", "1122", "4332", "1231" };
 
-    string SolveGreen(string keyname, int seqnum)
+    private string SolveGreen(string keyname, int seqnum)
     {
-        int key = SYMBOLS.IndexOf(keyname) + 1;
-        int num_g7 = bomb.GetSerialNumber().Count(x => x == 'G' | x == '7');
-        Debug.LogFormat("[Seven Choose Four #{0}] Green Puzzle: Key is " + keyname, moduleId);
+        var key = _alphabet.IndexOf(keyname) + 1;
+        var num_g7 = Bomb.GetSerialNumber().Count(x => x == 'G' | x == '7');
+        Debug.LogFormat("[Seven Choose Four #{0}] Green Puzzle: Key is {1}", moduleId, keyname);
         key = (key) % 100;
-        int tensdigit = key / 10;
-        int onesdigit = key % 10;
-        int a = (tensdigit + num_g7) % 4;
-        int b = (onesdigit + num_g7) % 4;
-        int sum = linesgrid[a, a] + linesgrid[a, b] + linesgrid[b, a] + linesgrid[b, b];
-        Debug.LogFormat("[Seven Choose Four #{0}] Green Puzzle: Sum of the lines is " + sum, moduleId);
+        var tensdigit = key / 10;
+        var onesdigit = key % 10;
+        var a = (tensdigit + num_g7) % 4;
+        var b = (onesdigit + num_g7) % 4;
+        var sum = linesgrid[a, a] + linesgrid[a, b] + linesgrid[b, a] + linesgrid[b, b];
+        Debug.LogFormat("[Seven Choose Four #{0}] Green Puzzle: Sum of the lines is {1}", moduleId, sum);
         if (sum % 2 == 0) return logSolution("Green", Reverse(greenodd[seqnum]));
         else return logSolution("Green", greenodd[seqnum]);
     }
 
-    private string[,] buttonordergrid = { {"1234", "1243", "2134", "2143", "3124" },
+    private readonly string[,] buttonordergrid = { {"1234", "1243", "2134", "2143", "3124" },
                                           {"3142", "1324", "1342", "1423", "1432" },
                                           {"4123", "4132", "2314", "2341", "3214" },
                                           {"3241", "2413", "2431", "4213", "4231" },
                                           {"3412", "3421", "4312", "4321", "1234" }};
 
-    string SolveBlue(string keyname, int seqnum)
+    private string SolveBlue(string keyname)
     {
-        Debug.LogFormat("[Seven Choose Four #{0}] Blue Puzzle: Key is " + keyname, moduleId);
-        int key = SYMBOLS.IndexOf(keyname) + 1;
-        int numaabat = bomb.GetBatteryCount(Battery.AA);
-        int numdbat = bomb.GetBatteryCount(Battery.D);
-        char col = 'F';
-        int row = key;
+        Debug.LogFormat("[Seven Choose Four #{0}] Blue Puzzle: Key is {1}", moduleId, keyname);
+        var key = _alphabet.IndexOf(keyname) + 1;
+        var numaabat = Bomb.GetBatteryCount(Battery.AA);
+        var numdbat = Bomb.GetBatteryCount(Battery.D);
+        var col = 'F';
+        var row = key;
         while (row > 5) row -= 5;
+        row--;
 
-        row = row - 1;
-
-
-        foreach (char c in bomb.GetSerialNumberLetters())
+        foreach (var c in Bomb.GetSerialNumberLetters())
         {
             switch (c)
             {
@@ -583,11 +569,11 @@ public class sevenChooseFour : MonoBehaviour
                     break;
             }
         }
-        col = SYMBOLS.ToCharArray()[row];
+        col = _alphabet.ToCharArray()[row];
         foundchar:
-        Debug.LogFormat("[Seven Choose Four #{0}] Blue Puzzle: Starting Table Position is " + "(" + col + "," + (row + 1).ToString() + ")", moduleId);
-        int colnum = SYMBOLS.IndexOf(col);
-        int dir = FindMaxDirection(row, colnum, 5, 5, 3);
+        Debug.LogFormat("[Seven Choose Four #{0}] Blue Puzzle: Starting Table Position is ({1},{2})", moduleId, col, row + 1);
+        var colnum = _alphabet.IndexOf(col);
+        var dir = FindMaxDirection(row, colnum, 5, 5, 3);
         switch (dir)
         {
             case 0:
@@ -600,7 +586,7 @@ public class sevenChooseFour : MonoBehaviour
                 break;
         }
         dir = FindMaxDirection(row, colnum, 5, 5, 1);
-        Debug.LogFormat("[Seven Choose Four #{0}] Blue Puzzle: Intermediate Table Position is " + "(" + SYMBOLS[colnum] + "," + (row + 1).ToString() + ")", moduleId);
+        Debug.LogFormat("[Seven Choose Four #{0}] Blue Puzzle: Intermediate Table Position is ({1},{2})", moduleId, _alphabet[colnum], row + 1);
         switch (dir)
         {
             case 0:
@@ -612,12 +598,12 @@ public class sevenChooseFour : MonoBehaviour
                 row = MoveDirection(row, numdbat, 4, dir == 1);
                 break;
         }
-        Debug.LogFormat("[Seven Choose Four #{0}] Blue Puzzle: Final Table Position is " + "(" + SYMBOLS[colnum] + "," + (row + 1).ToString() + ")", moduleId);
+        Debug.LogFormat("[Seven Choose Four #{0}] Blue Puzzle: Final Table Position is ({1},{2})", moduleId, _alphabet[colnum], row + 1);
 
         return logSolution("Blue", buttonordergrid[row, colnum]);
     }
 
-    private int[,] lettergrid =
+    private readonly int[,] lettergrid =
     {
         {12, 16, 18, 9, 19},
         {24, 15, 6, 2, 22 },
@@ -626,28 +612,27 @@ public class sevenChooseFour : MonoBehaviour
         {13, 5, 21, 8, 10 }
     };
 
-    string SolveMagenta(string key, int keypos)
+    private string SolveMagenta(string key)
     {
-        int keyvalue = SYMBOLS.IndexOf(key) + 1;
+        var keyvalue = _alphabet.IndexOf(key) + 1;
         if (keyvalue == 26) keyvalue = 1;
-        Debug.LogFormat("[Seven Choose Four #{0}] Magenta Puzzle: Key is " + key, moduleId);
+        Debug.LogFormat("[Seven Choose Four #{0}] Magenta Puzzle: Key is {1}", moduleId, key);
 
-        string letters = "";
-        char[] s = new char[4];
+        var letters = "";
+        var s = "";
 
-        for (int i = 0; i < 4; i++)
+        for (var i = 0; i < 4; i++)
         {
-            char c = bomb.GetSerialNumber().ToCharArray()[i];
+            var c = Bomb.GetSerialNumber().ToCharArray()[i];
             letters += c.ToString();
-            if (c < 65) s[i] = (char) (c + 17);
-            else s[i] = c;
+            s += c < 65 ? (char) (c + 17) : c;
         }
-        Debug.LogFormat("[Seven Choose Four #{0}] Magenta Puzzle: Letters to find are " + new string(s), moduleId);
-        int keyrow = -1;
-        int keycol = -1;
-        for (int row = 0; row < 5; row++)
+        Debug.LogFormat("[Seven Choose Four #{0}] Magenta Puzzle: Letters to find are {1}", moduleId, s);
+        var keyrow = -1;
+        var keycol = -1;
+        for (var row = 0; row < 5; row++)
         {
-            for (int col = 0; col < 5; col++)
+            for (var col = 0; col < 5; col++)
             {
                 if (lettergrid[row, col] == keyvalue)
                 {
@@ -658,13 +643,13 @@ public class sevenChooseFour : MonoBehaviour
             }
         }
         next:
-        int[] dist = new int[4];
-        for (int i = 0; i < 4; i++)
+        var dist = new int[4];
+        for (var i = 0; i < 4; i++)
         {
-            int value = SYMBOLS.IndexOf(s[i]) + 1;
-            for (int row = 0; row < 5; row++)
+            var value = _alphabet.IndexOf(s[i]) + 1;
+            for (var row = 0; row < 5; row++)
             {
-                for (int col = 0; col < 5; col++)
+                for (var col = 0; col < 5; col++)
                 {
                     if (lettergrid[row, col] == value)
                     {
@@ -678,19 +663,17 @@ public class sevenChooseFour : MonoBehaviour
         return logSolution("Magenta", dist.Join(""));
     }
 
-    string SolveCyan(string keyname, int seqnum)
+    private string SolveCyan(string keyname, int seqnum)
     {
         Debug.LogFormat("[Seven Choose Four #{0}] Cyan Puzzle: Key is " + keyname, moduleId);
-        int key = SYMBOLS.IndexOf(keyname);
-        key = key % 7;
-        int numprim = 0;
-        int numsec = 0;
+        var key = _alphabet.IndexOf(keyname);
+        key %= 7;
+        var numprim = 0;
+        var numsec = 0;
         if (key < 3 | key == 6) numprim++;
         if (key >= 3) numsec++;
-        string colors = manColorNames[key];
-        string solleft = "";
-        string solright = "";
-        for (int i = 0; i < 4; i++)
+        var colors = manColorNames[key];
+        for (var i = 0; i < 4; i++)
         {
             if (i != seqnum)
             {
@@ -702,6 +685,7 @@ public class sevenChooseFour : MonoBehaviour
 
         Debug.LogFormat("[Seven Choose Four #{0}] Cyan Puzzle: Colors are " + colors, moduleId);
         Debug.LogFormat("[Seven Choose Four #{0}] Cyan Puzzle: There are " + numprim + "P and " + numsec + "S", moduleId);
+        string solleft;
         switch (numprim)
         {
             case 0:
@@ -722,6 +706,7 @@ public class sevenChooseFour : MonoBehaviour
             default:
                 return "NULL";
         }
+        string solright;
         switch (numsec)
         {
             case 0:
@@ -745,23 +730,23 @@ public class sevenChooseFour : MonoBehaviour
         return logSolution("Cyan", solleft + solright);
     }
 
-    string SolveYellow(string key, int seqnum)
+    private string SolveYellow(string key, int seqnum)
     {
-        int pos1 = SYMBOLS.IndexOf(key);
-        Debug.LogFormat("[Seven Choose Four #{0}] Yellow Puzzle: Key is " + key, moduleId);
-        List<int> distances = new List<int>() { 24, 4, 11, 14, 22 };
-        List<string> letters = new List<string>() { "Y", "E", "L", "L", "O", "W" };
-        int index = -1;
+        var pos1 = _alphabet.IndexOf(key);
+        Debug.LogFormat("[Seven Choose Four #{0}] Yellow Puzzle: Key is {1}", moduleId, key);
+        var distances = new List<int>() { 24, 4, 11, 14, 22 };
+        var letters = new List<string>() { "Y", "E", "L", "L", "O", "W" };
+        var index = -1;
         index = FindClosestLetter(pos1, distances);
         if (index != 11) distances.Remove(index);
-        letters.Remove(SYMBOLS[index].ToString());
+        letters.Remove(_alphabet[index].ToString());
         pos1 = 25 - pos1;
         index = FindClosestLetter(pos1, distances);
         //letters.RemoveAt(index);
-        letters.Remove(SYMBOLS[index].ToString());
-        List<string> newletters = new List<string>() { "A", "A", "A", "A" };
-        int shift = (seqnum + 1) % 4;
-        for (int i = 0; i < 4; i++)
+        letters.Remove(_alphabet[index].ToString());
+        var newletters = new List<string>() { "A", "A", "A", "A" };
+        var shift = (seqnum + 1) % 4;
+        for (var i = 0; i < 4; i++)
         {
             newletters[shift] = letters[i];
             shift = (shift + 1) % 4;
@@ -769,21 +754,21 @@ public class sevenChooseFour : MonoBehaviour
         Debug.LogFormat("[Seven Choose Four #{0}] Yellow Puzzle: Shifted Letters: {1}", moduleId, newletters.Join(""));
         var letterindexpairs = new List<Item>()
         {
-            new Item {key = 0, value = SYMBOLS.IndexOf(newletters[0])},
-            new Item {key = 1, value = SYMBOLS.IndexOf(newletters[1])},
-            new Item {key = 2, value = SYMBOLS.IndexOf(newletters[2])},
-            new Item {key = 3, value = SYMBOLS.IndexOf(newletters[3])},
+            new Item {key = 0, value = _alphabet.IndexOf(newletters[0])},
+            new Item {key = 1, value = _alphabet.IndexOf(newletters[1])},
+            new Item {key = 2, value = _alphabet.IndexOf(newletters[2])},
+            new Item {key = 3, value = _alphabet.IndexOf(newletters[3])},
         };
         var sorted = letterindexpairs.OrderBy(x => x.value).ToList();
-        int digit = 1;
-        foreach (Item i in sorted)
+        var digit = 1;
+        foreach (var i in sorted)
         {
             i.value = digit;
             digit++;
         }
         sorted = sorted.OrderBy(x => x.key).ToList();
-        string result = "";
-        foreach (Item i in sorted)
+        var result = "";
+        foreach (var i in sorted)
         {
             result += (i.value).ToString();
         }
@@ -796,20 +781,20 @@ public class sevenChooseFour : MonoBehaviour
         public int value { get; set; }
     }
 
-    int FindClosestLetter(int input, List<int> l)
+    private int FindClosestLetter(int input, List<int> l)
     {
-        int smalld = 100000;
-        int index = -1;
-        List<Item> sortdist = new List<Item>();
-        for (int i = 0; i < l.Count; i++)
+        var smalld = 100000;
+        var index = -1;
+        var sortdist = new List<Item>();
+        for (var i = 0; i < l.Count; i++)
         {
             sortdist.Add(new Item { key = i, value = l[i] });
         }
         sortdist = sortdist.OrderBy(x => x.value).ToList();
-        int step = 0;
-        foreach (Item i in sortdist)
+        var step = 0;
+        foreach (var i in sortdist)
         {
-            int dist = Math.Abs(input - i.value);
+            var dist = Math.Abs(input - i.value);
             if (dist <= smalld)
             {
                 smalld = dist;
@@ -820,14 +805,14 @@ public class sevenChooseFour : MonoBehaviour
         return sortdist[index].value;
     }
 
-    int FindMaxDirection(int row, int col, int maxrows, int maxcols, int bias)
+    private int FindMaxDirection(int row, int col, int maxrows, int maxcols, int bias)
     {
-        int posydist = row;
-        int negydist = maxrows - row - 1;
-        int posxdist = maxcols - col - 1;
-        int negxdist = col;
+        var posydist = row;
+        var negydist = maxrows - row - 1;
+        var posxdist = maxcols - col - 1;
+        var negxdist = col;
 
-        List<int> l = new List<int>();
+        List<int> l;
         switch (bias)
         {
             case 0:
@@ -848,11 +833,11 @@ public class sevenChooseFour : MonoBehaviour
 
     }
 
-    int FirstMaxIndex(List<int> l)
+    private int FirstMaxIndex(List<int> l)
     {
-        int max = -10000;
-        int index = -1;
-        for (int i = 0; i < l.Count(); i++)
+        var max = -10000;
+        var index = -1;
+        for (var i = 0; i < l.Count(); i++)
         {
 
             if (l[i] > max)
@@ -864,14 +849,14 @@ public class sevenChooseFour : MonoBehaviour
         return index;
     }
 
-    int MoveDirection(int x, int dist, int maxpos, bool pos)
+    private int MoveDirection(int x, int dist, int maxpos, bool pos)
     {
         return pos ? Math.Min(x + dist, maxpos) : Math.Max(x - dist, 0);
     }
 
-    string logSolution(string name, string sol)
+    private string logSolution(string name, string sol)
     {
-        Debug.LogFormat("[Seven Choose Four #{0}] {1} solution is: " + sol, moduleId, name);
+        Debug.LogFormat("[Seven Choose Four #{0}] {1} solution is: {2}", moduleId, name, sol);
         return sol;
     }
 
@@ -889,31 +874,31 @@ public class sevenChooseFour : MonoBehaviour
 #pragma warning disable 414
     private readonly string TwitchHelpMessage = @"!{0} press <1/2/3/4> [Presses the specified button]. You can also string moves together i.e. press 1 3 2 4 or press 1,3,2,4.";
 #pragma warning restore 414
-    IEnumerator ProcessTwitchCommand(string command)
+    private IEnumerator ProcessTwitchCommand(string command)
     {
-        string[] parameters = command.Split(' ', ',');
+        var parameters = command.Split(' ', ',');
         if (Regex.IsMatch(parameters[0], @"^\s*press\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
         {
-            for (int i = 1; i < parameters.Length; i++)
+            for (var i = 1; i < parameters.Length; i++)
             {
                 if (inputIsValid(parameters[i]))
                 {
                     yield return null;
                     if (parameters[i].ToLower().Equals("1"))
                     {
-                        buttons[0].OnInteract();
+                        Buttons[0].OnInteract();
                     }
                     else if (parameters[i].ToLower().Equals("2"))
                     {
-                        buttons[1].OnInteract();
+                        Buttons[1].OnInteract();
                     }
                     else if (parameters[i].ToLower().Equals("3"))
                     {
-                        buttons[2].OnInteract();
+                        Buttons[2].OnInteract();
                     }
                     else if (parameters[i].ToLower().Equals("4"))
                     {
-                        buttons[3].OnInteract();
+                        Buttons[3].OnInteract();
                     }
                 }
             }
@@ -921,7 +906,7 @@ public class sevenChooseFour : MonoBehaviour
         }
     }
 
-    IEnumerator TwitchHandleForcedSolve()
+    private IEnumerator TwitchHandleForcedSolve()
     {
         while (!moduleSolved)
         {
@@ -936,13 +921,13 @@ public class sevenChooseFour : MonoBehaviour
             if (validPrefix == -1)
             {
                 Debug.LogFormat("[Seven Choose Four #{0}] Autosolver: existing input is {1}, valid solutions are: {2}", moduleId, buttonspressedStr, possibleSolutions.Join(", "));
-                module.HandlePass();
+                Module.HandlePass();
                 yield break;
             }
 
             // Press the next correct button
             var nextBtn = possibleSolutions[validPrefix][buttonspressed.Count] - '1';
-            buttons[(nextBtn + stage) % 4].OnInteract();
+            Buttons[(nextBtn + stage) % 4].OnInteract();
             yield return new WaitForSeconds(.1f);
         }
     }
