@@ -314,6 +314,7 @@ public class sevenChooseFour : MonoBehaviour
                 led.material = ledColors[2];
             }
             module.HandlePass();
+            moduleSolved = true;
         }
         else
         {
@@ -947,6 +948,32 @@ public class sevenChooseFour : MonoBehaviour
                 }
             }
             yield break;
+        }
+    }
+
+    IEnumerator TwitchHandleForcedSolve()
+    {
+        while (!moduleSolved)
+        {
+            // What are the possible solutions of the current stage?
+            var possibleSolutions = solution[stage] == "W" ? whitesolution : new List<string> { solution[stage] };
+
+            // Is what we’ve entered so far a prefix of a valid solution?
+            var buttonspressedStr = buttonspressed.Join("");
+            var validPrefix = possibleSolutions.IndexOf(sol => sol.StartsWith(buttonspressedStr));
+
+            // If not, the autosolver is impossible
+            if (validPrefix == -1)
+            {
+                Debug.LogFormat("[Seven Choose Four #{0}] Autosolver: existing input is {1}, valid solutions are: {2}", moduleId, buttonspressedStr, possibleSolutions.Join(", "));
+                module.HandlePass();
+                yield break;
+            }
+
+            // Press the next correct button
+            var nextBtn = possibleSolutions[validPrefix][buttonspressed.Count] - '1';
+            buttons[(nextBtn + stage) % 4].OnInteract();
+            yield return new WaitForSeconds(.1f);
         }
     }
 }
