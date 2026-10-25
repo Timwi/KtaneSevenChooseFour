@@ -15,7 +15,9 @@ public class sevenChooseFour : MonoBehaviour
 
     public Material[] LedColors; //B C G M R Y W
     public Material BlackLed;
+    public Material OrangeLed;  // for progress LEDs only
     public Renderer[] Leds;
+    public Renderer[] ProgressLeds;
 
     private readonly string[] ledColorNames = { "B", "C", "G", "M", "R", "Y", "W" };
     private readonly string[] manColorNames = { "R", "G", "B", "M", "C", "Y", "W" };
@@ -240,7 +242,6 @@ public class sevenChooseFour : MonoBehaviour
     }
 
     private int stage = 0;
-    private int numpresses = 0;
     private readonly List<char> buttonspressed = new List<char>();
 
     private void ButtonPress(KMSelectable button)
@@ -253,7 +254,7 @@ public class sevenChooseFour : MonoBehaviour
         if (moduleReady)
         {
             buttonspressed.Add(getButtonValue(buttonname));
-            if (numpresses == 3)
+            if (buttonspressed.Count == 4)
             {
                 var currentsolution = solution[stage];
                 if (currentsolution == "W")
@@ -266,7 +267,6 @@ public class sevenChooseFour : MonoBehaviour
                     {
                         Module.HandleStrike();
                         Buttons[stage].GetComponent<MeshRenderer>().material = LedColors[4];
-                        numpresses = -1;
                         Debug.LogFormat("[Seven Choose Four #{0}] Incorrect, you entered {1}, stage reset.", moduleId, buttonspressed.Join(""));
                     }
                 }
@@ -280,13 +280,15 @@ public class sevenChooseFour : MonoBehaviour
                     {
                         Module.HandleStrike();
                         Buttons[stage].GetComponent<MeshRenderer>().material = LedColors[4];
-                        numpresses = -1;
                         Debug.LogFormat("[Seven Choose Four #{0}] Incorrect, you entered {1}, stage reset.", moduleId, buttonspressed.Join(""));
                     }
                 }
                 buttonspressed.Clear();
             }
-            numpresses++;
+
+            // Set progress LEDs
+            for (var i = 0; i < 3; i++)
+                ProgressLeds[i].sharedMaterial = buttonspressed.Count > i ? OrangeLed : BlackLed;
         }
     }
 
@@ -294,7 +296,6 @@ public class sevenChooseFour : MonoBehaviour
     {
         Buttons[stage].GetComponent<MeshRenderer>().material = LedColors[2];
         stage++;
-        numpresses = -1;
         if (stage == 4)
         {
             lightsready = false;
