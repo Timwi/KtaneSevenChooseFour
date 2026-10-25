@@ -12,12 +12,13 @@ public class sevenChooseFour : MonoBehaviour
     public KMBombInfo Bomb;
     public KMBombModule Module;
     public KMSelectable[] Buttons;
+    public Renderer[] Leds;
+    public Renderer[] ProgressLeds;
 
     public Material[] LedColors; //B C G M R Y W
     public Material BlackLed;
     public Material OrangeLed;  // for progress LEDs only
-    public Renderer[] Leds;
-    public Renderer[] ProgressLeds;
+    public Material SolvedButton;
 
     private readonly string[] ledColorNames = { "B", "C", "G", "M", "R", "Y", "W" };
     private readonly string[] manColorNames = { "R", "G", "B", "M", "C", "Y", "W" };
@@ -50,7 +51,6 @@ public class sevenChooseFour : MonoBehaviour
 
     private static int moduleIdCounter = 1;
     private int moduleId;
-    private bool moduleSolved;
     private bool moduleReady = false;
 
     private void Awake()
@@ -96,7 +96,7 @@ public class sevenChooseFour : MonoBehaviour
         ledindex.Add(UnityEngine.Random.Range(0, 7));
         for (var i = 0; i < 4; i++)
         {
-            Leds[i].material = LedColors[ledindex[i]];
+            Leds[i].sharedMaterial = LedColors[ledindex[i]];
         }
     }
 
@@ -119,28 +119,23 @@ public class sevenChooseFour : MonoBehaviour
         ledfunctionshuffled = ledfunction.OrderBy(x => UnityEngine.Random.value).ToList();
         lightsready = true;
 
-        Debug.LogFormat("[Seven Choose Four #{0}] Morse key is {1} {2}", moduleId, morsekeyletter, _morseSymbols[morsekeyindex]);
+        Debug.LogFormat("[Seven Choose Four #{0}] Morse key is {1} ({2})", moduleId, morsekeyletter, _morseSymbols[morsekeyindex]);
         Debug.LogFormat("[Seven Choose Four #{0}] Tap code key is {1}", moduleId, tapkey);
         var ledcolorstring = "";
         for (var i = 0; i < ledindex.Count; i++)
-        {
-            ledcolorstring += ledColorNames[ledindex.ToArray()[i]];
-        }
-        Debug.LogFormat("[Seven Choose Four #{0}] Color seq is {1}", moduleId, ledcolorstring);
+            ledcolorstring += ledColorNames[ledindex[i]];
+
+        Debug.LogFormat("[Seven Choose Four #{0}] Color sequence is {1}", moduleId, ledcolorstring);
         Debug.LogFormat("[Seven Choose Four #{0}] Number key is {1}={2}", moduleId, numkey, manColorNames[numkey - 1]);
         var buttoninfolist = DefineButtons();
-        //int keysoffset = ledfunctionshuffled[2];
         var keysoffset = ledfunctionshuffled.IndexOf(2);
-        //Debug.Log("keyoffset " + keysoffset);
         var keyorder = "";
         for (var i = 0; i < 4; i++)
         {
             keys[i] = buttoninfolist[(i + keysoffset) % 4].buttonoutputkey;
-            // Debug.Log("keys " + keys[i] + " from location " + (i + keysoffset) % 4);
             keyorder += keys[i];
-
         }
-        Debug.LogFormat("[Seven Choose Four #{0}] The correct key order is {1}", moduleId, keyorder);
+        Debug.LogFormat("[Seven Choose Four #{0}] The correct key order is: {1}", moduleId, keyorder);
     }
 
     private class Buttoninfo
@@ -229,16 +224,16 @@ public class sevenChooseFour : MonoBehaviour
 
     private List<string> FillWhiteSolution(string key, int seqnum)
     {
-        Debug.LogFormat("[Seven Choose Four #{0}] White Puzzle: Key is {1}", moduleId, key);
-        var whitesols = new List<string>();
-        whitesols.Add(SolveRed(key, seqnum));
-        whitesols.Add(SolveGreen(key, seqnum));
-        whitesols.Add(SolveBlue(key));
-        whitesols.Add(SolveMagenta(key));
-        whitesols.Add(SolveCyan(key, seqnum));
-        whitesols.Add(SolveYellow(key, seqnum));
-
-        return whitesols;
+        Debug.LogFormat("[Seven Choose Four #{0}] White puzzle: key is {1}", moduleId, key);
+        return new List<string>
+        {
+            SolveRed(key, seqnum),
+            SolveGreen(key, seqnum),
+            SolveBlue(key),
+            SolveMagenta(key),
+            SolveCyan(key, seqnum),
+            SolveYellow(key, seqnum)
+        };
     }
 
     private int stage = 0;
@@ -246,43 +241,26 @@ public class sevenChooseFour : MonoBehaviour
 
     private void ButtonPress(KMSelectable button)
     {
-        Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, this.transform);
-        var buttonname = button.name;
+        Audio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
         button.AddInteractionPunch();
-        Debug.LogFormat("[Seven Choose Four #{0}] Button pressed is {1}", moduleId, getButtonValue(buttonname));
+
+        var buttonname = button.name;
 
         if (moduleReady)
         {
             buttonspressed.Add(getButtonValue(buttonname));
             if (buttonspressed.Count == 4)
             {
-                var currentsolution = solution[stage];
-                if (currentsolution == "W")
-                {
-                    if (whitesolution.Contains(buttonspressed.Join("")))
-                    {
-                        UpdateStage();
-                    }
-                    else
-                    {
-                        Module.HandleStrike();
-                        Buttons[stage].GetComponent<MeshRenderer>().material = LedColors[4];
-                        Debug.LogFormat("[Seven Choose Four #{0}] Incorrect, you entered {1}, stage reset.", moduleId, buttonspressed.Join(""));
-                    }
-                }
+                var acceptableSolutions = solution[stage] == "W" ? whitesolution : new List<string> { solution[stage] };
+                if (acceptableSolutions.Contains(buttonspressed.Join("")))
+                    UpdateStage();
                 else
                 {
-                    if (buttonspressed.Join("") == currentsolution)
-                    {
-                        UpdateStage();
-                    }
-                    else
-                    {
-                        Module.HandleStrike();
-                        Buttons[stage].GetComponent<MeshRenderer>().material = LedColors[4];
-                        Debug.LogFormat("[Seven Choose Four #{0}] Incorrect, you entered {1}, stage reset.", moduleId, buttonspressed.Join(""));
-                    }
+                    Module.HandleStrike();
+                    Buttons[stage].GetComponent<MeshRenderer>().sharedMaterial = LedColors[4];
+                    Debug.LogFormat("[Seven Choose Four #{0}] Incorrect, you entered {1}. Stage reset.", moduleId, buttonspressed.Join(""));
                 }
+
                 buttonspressed.Clear();
             }
 
@@ -294,36 +272,21 @@ public class sevenChooseFour : MonoBehaviour
 
     private void UpdateStage()
     {
-        Buttons[stage].GetComponent<MeshRenderer>().material = LedColors[2];
+        Buttons[stage].GetComponent<MeshRenderer>().sharedMaterial = SolvedButton;
         stage++;
         if (stage == 4)
         {
             lightsready = false;
             moduleReady = false;
             foreach (var led in Leds)
-            {
-                led.material = LedColors[2];
-            }
+                led.sharedMaterial = LedColors[2];  // green
+            Debug.LogFormat("[Seven Choose Four #{0}] Module solved.", moduleId);
             Module.HandlePass();
-            moduleSolved = true;
         }
         else
         {
-            var stagesol = "";
-            Debug.LogFormat("[Seven Choose Four #{0}] Stage Passed", moduleId);
-            if (solution[stage] == "W")
-            {
-                foreach (var s in whitesolution)
-                {
-                    stagesol += s;
-                    stagesol += " ";
-                }
-            }
-            else
-            {
-                stagesol = solution[stage];
-            }
-            Debug.LogFormat("[Seven Choose Four #{0}] Next stage solution is {1}", moduleId, stagesol);
+            Debug.LogFormat("[Seven Choose Four #{0}] Stage passed.", moduleId);
+            Debug.LogFormat("[Seven Choose Four #{0}] Next stage solution is: {1}", moduleId, solution[stage] == "W" ? whitesolution.Join(" or ") : solution[stage]);
         }
     }
 
@@ -366,7 +329,7 @@ public class sevenChooseFour : MonoBehaviour
             if (timer_morse < 0)
             {
                 var morseled = ledfunctionshuffled.IndexOf(0);
-                Leds[morseled].material = morse[morsetimer] ? LedColors[ledindex[morseled]] : BlackLed;
+                Leds[morseled].sharedMaterial = morse[morsetimer] ? LedColors[ledindex[morseled]] : BlackLed;
                 morsetimer = (morsetimer + 1) % morse.Length;
                 timer_morse = DOT_LENGTH;
             }
@@ -375,7 +338,7 @@ public class sevenChooseFour : MonoBehaviour
             if (timer_tap < 0)
             {
                 var tapled = ledfunctionshuffled.IndexOf(1);
-                Leds[tapled].material = tapcode[taptimer] ? LedColors[ledindex[tapled]] : BlackLed;
+                Leds[tapled].sharedMaterial = tapcode[taptimer] ? LedColors[ledindex[tapled]] : BlackLed;
                 taptimer = (taptimer + 1) % tapcode.Length;
                 timer_tap = DOT_LENGTH;
             }
@@ -385,7 +348,7 @@ public class sevenChooseFour : MonoBehaviour
             {
                 var colorled = ledfunctionshuffled.IndexOf(2);
 
-                Leds[colorled].material = colortimer < ledindex.Count ? LedColors[ledindex[colortimer]] : BlackLed;
+                Leds[colorled].sharedMaterial = colortimer < ledindex.Count ? LedColors[ledindex[colortimer]] : BlackLed;
                 colortimer = (colortimer + 1) % (ledindex.Count + 1);
 
                 timer_color = DOT_LENGTH * 3;
@@ -395,7 +358,7 @@ public class sevenChooseFour : MonoBehaviour
             if (timer_num < 0)
             {
                 var numled = ledfunctionshuffled.IndexOf(3);
-                Leds[numled].material = flashcode[numtimer] ? LedColors[ledindex[numled]] : BlackLed;
+                Leds[numled].sharedMaterial = flashcode[numtimer] ? LedColors[ledindex[numled]] : BlackLed;
                 numtimer = (numtimer + 1) % flashcode.Length;
                 timer_num = DOT_LENGTH;
             }
@@ -909,7 +872,7 @@ public class sevenChooseFour : MonoBehaviour
 
     private IEnumerator TwitchHandleForcedSolve()
     {
-        while (!moduleSolved)
+        while (stage < 4)
         {
             // What are the possible solutions of the current stage?
             var possibleSolutions = solution[stage] == "W" ? whitesolution : new List<string> { solution[stage] };

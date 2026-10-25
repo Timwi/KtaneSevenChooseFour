@@ -789,7 +789,7 @@ MeshRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_Materials:
-  - {fileID: 2100000, guid: 0b8345d6190d14013b825698a59f7759, type: 2}
+  - {fileID: 2100000, guid: a71f3b959251690438c66390ad46cd1a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -925,7 +925,7 @@ MeshRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_Materials:
-  - {fileID: 2100000, guid: 4659d4f547d3d4bd8bc0f31048ceb950, type: 2}
+  - {fileID: 2100000, guid: 6cadbae4c4d0e6b4faf3b51e1a9b215e, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1027,7 +1027,7 @@ MeshRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_Materials:
-  - {fileID: 2100000, guid: 3431ddf879dcaf340b75f2b1f70788e0, type: 2}
+  - {fileID: 2100000, guid: 2e789121a8d8ef440a5dee5201bc27d2, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1061,7 +1061,7 @@ MeshRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_Materials:
-  - {fileID: 2100000, guid: c3e8c25400b8d457cabe09d99fa1f1f9, type: 2}
+  - {fileID: 2100000, guid: e5a15d18e8823834190f61f4e765337c, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1294,6 +1294,15 @@ MonoBehaviour:
   - {fileID: 114485164901424374}
   - {fileID: 114820652549838178}
   - {fileID: 114362006094765862}
+  Leds:
+  - {fileID: 23435859098427590}
+  - {fileID: 23614600574148088}
+  - {fileID: 23893285245515468}
+  - {fileID: 23776438985583310}
+  ProgressLeds:
+  - {fileID: 23581385245652594}
+  - {fileID: 23039945943866784}
+  - {fileID: 23901656072484794}
   LedColors:
   - {fileID: 2100000, guid: e5a15d18e8823834190f61f4e765337c, type: 2}
   - {fileID: 2100000, guid: 2e789121a8d8ef440a5dee5201bc27d2, type: 2}
@@ -1304,15 +1313,7 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 9f8bfc8f4bc342f40b68ca037ed2ca50, type: 2}
   BlackLed: {fileID: 2100000, guid: e6ddc669e9faa4dad93207caa5a7c773, type: 2}
   OrangeLed: {fileID: 2100000, guid: 5da6b0f0a6f3921408c37517cd6bbcff, type: 2}
-  Leds:
-  - {fileID: 23435859098427590}
-  - {fileID: 23614600574148088}
-  - {fileID: 23893285245515468}
-  - {fileID: 23776438985583310}
-  ProgressLeds:
-  - {fileID: 23581385245652594}
-  - {fileID: 23039945943866784}
-  - {fileID: 23901656072484794}
+  SolvedButton: {fileID: 2100000, guid: 3966e109a1624d84ead97620e4dee5d5, type: 2}
 --- !u!114 &114134628041544666
 MonoBehaviour:
   m_ObjectHideFlags: 1
