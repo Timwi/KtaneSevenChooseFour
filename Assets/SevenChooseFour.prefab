@@ -1042,15 +1042,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fb5e22218bf73147a5fa850fdbde5e6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  audio: {fileID: 114334485907333988}
-  bomb: {fileID: 114855241698573090}
-  module: {fileID: 114806860205938876}
-  buttons:
+  Audio: {fileID: 114334485907333988}
+  Bomb: {fileID: 114855241698573090}
+  Module: {fileID: 114806860205938876}
+  Buttons:
   - {fileID: 114555500792213586}
   - {fileID: 114485164901424374}
   - {fileID: 114820652549838178}
   - {fileID: 114362006094765862}
-  ledColors:
+  LedColors:
   - {fileID: 2100000, guid: e5a15d18e8823834190f61f4e765337c, type: 2}
   - {fileID: 2100000, guid: 2e789121a8d8ef440a5dee5201bc27d2, type: 2}
   - {fileID: 2100000, guid: b6ce18e7b677eb04a8bb59d86097ba1d, type: 2}
@@ -1058,8 +1058,8 @@ MonoBehaviour:
   - {fileID: 2100000, guid: a71f3b959251690438c66390ad46cd1a, type: 2}
   - {fileID: 2100000, guid: 6cadbae4c4d0e6b4faf3b51e1a9b215e, type: 2}
   - {fileID: 2100000, guid: 9f8bfc8f4bc342f40b68ca037ed2ca50, type: 2}
-  blackled: {fileID: 2100000, guid: e6ddc669e9faa4dad93207caa5a7c773, type: 2}
-  leds:
+  BlackLed: {fileID: 2100000, guid: e6ddc669e9faa4dad93207caa5a7c773, type: 2}
+  Leds:
   - {fileID: 23435859098427590}
   - {fileID: 23901656072484794}
   - {fileID: 23039945943866784}
