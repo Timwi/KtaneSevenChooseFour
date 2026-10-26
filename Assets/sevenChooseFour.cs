@@ -584,12 +584,13 @@ public class sevenChooseFour : MonoBehaviour
 
         var letters = "";
         var s = "";
+        var serialNumber = Bomb.GetSerialNumber();
 
         for (var i = 0; i < 4; i++)
         {
-            var c = Bomb.GetSerialNumber().ToCharArray()[i];
-            letters += c.ToString();
-            s += c < 65 ? (char) (c + 17) : c;
+            var c = serialNumber[i] == 'Z' ? 'A' : serialNumber[i];
+            letters += c;
+            s += c < 'A' ? (char) (c - '0' + 'A') : c;
         }
         Debug.LogFormat("[Seven Choose Four #{0}] Magenta Puzzle: Letters to find are {1}", moduleId, s);
         var keyrow = -1;
